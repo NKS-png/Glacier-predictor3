@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Real-Time Glacier Risk Prediction</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <style>
+    #map { height: 400px; margin-top: 20px; }
+    .chart-container { display: flex; gap: 20px; margin-top: 20px; }
+    .chart-container > canvas { flex: 1; }
+  </style>
+</head>
+<body data-show-popup="{{ show_popup }}">
+  <div class="bg-image"></div>
+  <div class="container">
+    <h1>🛰️ Glacier Meltdown Prediction (Himalayas)</h1>
+    
+    <div id="map"></div>
+
+    <form method="POST">
+      <label>Latitude:</label>
+      <input type="text" id="latitude" name="latitude" placeholder="e.g. 28.5" required>
+
+      <label>Longitude:</label>
+      <input type="text" id="longitude" name="longitude" placeholder="e.g. 83.9" required>
+
+      <label>Target Year:</label>
+      <input type="date" name="year_picker" id="year_picker" required>
+      <input type="hidden" name="year" id="year">
+
+      <button type="submit">Predict Using Live Satellite Data</button>
+    </form>
+
+    {% if prediction is not none %}
+      <div class="result">
+        <h2>Prediction Result for {{ target_year }}</h2>
+        <p>{{ risk }}</p>
+        <img src="{{ image_file }}" alt="Risk level image" style="width:100%; max-width: 400px; margin-top:15px;">
+        {% if prediction %}
+          <p>
+            Predicted glacier area: <strong>{{ prediction }} sq. km</strong>
+          </p>
+        {% endif %}
+      </div>
+
+      <div class="chart-container">
+        <canvas id="glacierChart" data-chartdata='{{ chart_data|tojson }}'></canvas>
+        <canvas id="tempChart" data-chartdata='{{ temp_chart_data|tojson }}'></canvas>
+      </div>
+    {% endif %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Map Initialization
+      const map = L.map('map').setView([28.5, 83.9], 6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+      
+      let marker = L.marker([28.5, 83.9]).addTo(map);
+      map.on('click', function(e) {
+        document.getElementById('latitude').value = e.latlng.lat.toFixed(4);
+        document.getElementById('longitude').value = e.latlng.lng.toFixed(4);
+        if (marker) {
+          map.removeLayer(marker);
+        }
+        marker = L.marker(e.latlng).addTo(map);
+      });
+
+      // Year Picker
+      document.getElementById('year_picker').addEventListener('change', function() {
+        document.getElementById('year').value = new Date(this.value).getFullYear();
+      });
+
+      // Chart Rendering
+      function renderChart(canvasId, chartData, label, color) {
+        const canvas = document.getElementById(canvasId);
+        if (canvas && chartData && chartData.length > 1) {
+          try {
+            const labels = chartData.map(d => d[0]);
+            const data = chartData.map(d => d[1]);
+            new Chart(canvas.getContext('2d'), {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: label,
+                  data: data,
+                  borderColor: color,
+                  backgroundColor: color.replace('1)', '0.2)'),
+                  fill: true,
+                }]
+              },
+              options: { responsive: true }
+            });
+          } catch (e) {
+            console.error("Chart error:", e);
+          }
+        }
+      }
+
+      const glacierData = JSON.parse('{{ chart_data|tojson|safe }}');
+      const tempData = JSON.parse('{{ temp_chart_data|tojson|safe }}');
+      
+      renderChart('glacierChart', glacierData, 'Predicted Glacier Area (sq. km)', 'rgba(75, 192, 192, 1)');
+      renderChart('tempChart', tempData, 'Predicted Avg. Temperature (°C)', 'rgba(255, 99, 132, 1)');
+
+      // Popup logic
+      if (document.body.dataset.showPopup === 'True') {
+        alert("Not a glacier, pick again 😠");
+      }
+    });
+  </script>
+</body>
+</html>
