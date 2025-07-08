@@ -2,7 +2,11 @@ from flask import Flask, render_template, request
 from model import predict_glacier_area, predict_temperature
 from satellite import get_satellite_data
 from datetime import datetime, timedelta
-
+import requests
+from io import BytesIO
+from PIL import Image
+import base64
+import os
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
@@ -14,12 +18,44 @@ def index():
     image_file = 'static/default.jpg'
     target_year = None
     show_popup = False
+    image_data = None
+    image_data_2025 = None
+    error_message = None
+    info_message = None
 
     if request.method == 'POST':
         try:
-            lat = float(request.form['latitude'])
-            lon = float(request.form['longitude'])
+            lat = 28.5  # Fixed Himalaya latitude
+            lon = 85.0  # Fixed Himalaya longitude
             target_year = int(request.form['year'])
+            current_year = datetime.now().year
+
+            def get_image_data(year):
+                url = f"https://services.sentinel-hub.com/ogc/wms/44a4a2ff-fbc0-4c37-b7fa-f52fa99cbdb7/?REQUEST=GetMap&BBOX={lat-0.05},{lon-0.05},{lat+0.05},{lon+0.05}&LAYERS=TRUE_COLOR&WIDTH=256&HEIGHT=256&FORMAT=image/jpeg&TIME={year}-01-01/{year}-12-31&SRS=EPSG:4326"
+                response = requests.get(url)
+                if response.status_code != 200 or not response.content or len(response.content) < 100:
+                    return None
+                image = Image.open(BytesIO(response.content))
+                buffered = BytesIO()
+                image.save(buffered, format="JPEG")
+                return base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+            try:
+                satellite_year = min(target_year, current_year)
+                image_data = get_image_data(satellite_year)
+
+                if target_year > current_year:
+                    image_data_2025 = get_image_data(current_year)
+                    info_message = f"Comparison: {current_year} (left) vs. {target_year} prediction (right)."
+
+                if not image_data:
+                    raise Exception("Failed to fetch satellite image.")
+
+            except Exception as e:
+                image_data = None
+                image_data_2025 = None
+                error_message = f"Failed to fetch satellite image: {str(e)}"
+                print(f"Image fetch failed: {e}")
 
             # Try yesterday's date, fallback to -2 if fails
             for days_ago in range(1, 6):
@@ -71,7 +107,11 @@ def index():
                            temp_chart_data=temp_chart_data,
                            image_file=image_file,
                            target_year=target_year,
-                          show_popup=show_popup)
+                           show_popup=show_popup,
+                           image_data=image_data,
+                           image_data_2025=image_data_2025,
+                           error_message=error_message,
+                           info_message=info_message)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+  app.run(debug=True)

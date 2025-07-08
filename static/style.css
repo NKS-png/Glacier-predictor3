@@ -1,11 +1,12 @@
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: #333;
+    font-family: 'Orbitron', sans-serif;
+    color: #e0e0e0;
     line-height: 1.6;
     padding: 20px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    background-color: #000000;
 }
 
 @keyframes pan-image {
@@ -29,68 +30,79 @@ body {
 .container {
     width: 90%;
     max-width: 1200px;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(10, 20, 40, 0.85);
     padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 18px;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+    border: 1px solid rgba(0, 255, 255, 0.5);
     position: relative;
     z-index: 1;
+    text-align: center;
 }
 
 h1 {
-    color: #1c2e59;
+    color: #00ffff;
     text-align: center;
     margin-bottom: 25px;
+    font-size: 2.5em;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
 }
 
 form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px 20px;
-    margin-top: 20px;
+    margin: 30px auto;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    gap: 20px;
 }
 
 label {
     font-weight: 600;
+    font-size: 1.5em;
+    color: #00ffff;
 }
 
-input[type="text"],
-input[type="date"] {
-    width: 100%;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
+input[type="number"] {
+    width: 120px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #00ffff;
+    background-color: #1a1a3a;
+    color: #e0e0e0;
+    font-size: 1.5em;
+    text-align: center;
 }
 
 button {
-    grid-column: 1 / -1;
-    padding: 12px;
+    padding: 15px 30px;
     border: none;
-    background: #007bff;
-    color: white;
-    border-radius: 6px;
+    background: #00ffff;
+    color: #0a0a1a;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
+    font-size: 1.2em;
+    font-weight: bold;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px #00ffff;
 }
 
 button:hover {
-    background: #0056b3;
+    background: #fff;
+    color: #000;
+    box-shadow: 0 0 25px #fff;
 }
 
 .result {
-    background: rgba(248, 249, 250, 0.8);
+    background: rgba(20, 30, 50, 0.8);
     padding: 20px;
     border-radius: 8px;
     margin-top: 30px;
-    border: 1px solid #e3e6ea;
+    border: 1px solid #00ffff;
 }
 
-.result h2 {
+.result h2, .result h3, .result h4 {
     margin-top: 0;
-    color: #1c2e59;
+    color: #00ffff;
 }
 
 .chart-container {
@@ -102,9 +114,68 @@ button:hover {
 .chart-container > canvas {
     flex: 1;
     min-width: 0;
+    background-color: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
 }
 
 #map {
     height: 400px;
     margin-top: 20px;
+    border-radius: 12px;
+    border: 1px solid #00ffff;
+}
+
+#loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #fff;
+    font-size: 2em;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.satellite-emoji {
+    font-size: 3em;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes color-cycle {
+    0%   { color: #00ffff; text-shadow: 0 0 10px #00ffff; border-color: #00ffff; box-shadow: 0 0 15px #00ffff; }
+    25%  { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; border-color: #ff00ff; box-shadow: 0 0 15px #ff00ff; }
+    50%  { color: #00ff00; text-shadow: 0 0 10px #00ff00; border-color: #00ff00; box-shadow: 0 0 15px #00ff00; }
+    75%  { color: #ffff00; text-shadow: 0 0 10px #ffff00; border-color: #ffff00; box-shadow: 0 0 15px #ffff00; }
+    100% { color: #00ffff; text-shadow: 0 0 10px #00ffff; border-color: #00ffff; box-shadow: 0 0 15px #00ffff; }
+}
+
+.comparison-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.image-box {
+    text-align: center;
+}
+
+.comparison-image {
+    width: 300px;
+    height: 300px;
+    border: 2px solid #00ffff;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
 }

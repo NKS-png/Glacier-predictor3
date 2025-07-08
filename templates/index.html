@@ -15,23 +15,22 @@
 <body data-show-popup="{{ show_popup }}">
   <div class="bg-image"></div>
   <div class="container">
-    <h1>🛰️ Glacier Meltdown Prediction (Himalayas)</h1>
-    
-    <div id="map"></div>
-
-    <form method="POST">
-      <label>Latitude:</label>
-      <input type="text" id="latitude" name="latitude" placeholder="e.g. 28.5" required>
-
-      <label>Longitude:</label>
-      <input type="text" id="longitude" name="longitude" placeholder="e.g. 83.9" required>
-
-      <label>Target Year:</label>
-      <input type="date" name="year_picker" id="year_picker" required>
-      <input type="hidden" name="year" id="year">
-
+    <img src="/static/logo.png" alt="Glacier Guardians Logo" style="width: 150px; margin-bottom: 20px;">
+    <h1>Real-Time Glacier Risk Prediction (Himalayas)</h1>
+    <div id="map" style="height: 400px; margin-bottom: 30px; border-radius: 18px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); perspective: 800px; transform: rotateX(8deg);"></div>
+    <form method="POST" id="prediction-form">
+      <label for="year">Target Year:</label>
+      <input type="range" id="year-slider" min="2025" max="2100" value="{{ target_year or 2025 }}" oninput="document.getElementById('year-input').value = this.value">
+      <input type="number" name="year" id="year-input" min="2025" max="2100" value="{{ target_year or 2025 }}" oninput="document.getElementById('year-slider').value = this.value" required>
       <button type="submit">Predict Using Live Satellite Data</button>
     </form>
+    
+    <div id="loading-overlay" style="display:none;">
+      <div class="loading-content">
+        <span class="satellite-emoji">🛰️</span>
+        <p>Fetching Data...</p>
+      </div>
+    </div>
 
     {% if prediction is not none %}
       <div class="result">
@@ -43,8 +42,28 @@
             Predicted glacier area: <strong>{{ prediction }} sq. km</strong>
           </p>
         {% endif %}
+        {% if image_data %}
+          <h3>Satellite Comparison</h3>
+          <div class="comparison-container">
+            {% if image_data_2025 %}
+            <div class="image-box">
+              <h4>2025 (Latest)</h4>
+              <img src="data:image/jpeg;base64,{{ image_data_2025 }}" class="comparison-image">
+            </div>
+            {% endif %}
+            <div class="image-box">
+              <h4>{{ target_year }} (Prediction)</h4>
+              <img src="data:image/jpeg;base64,{{ image_data }}" class="comparison-image">
+            </div>
+          </div>
+          {% if info_message %}
+            <p style="margin-top: 10px; font-style: italic; color: #ddd;">{{ info_message }}</p>
+          {% endif %}
+        {% endif %}
+        {% if error_message %}
+          <div style="color: #ff4444; margin-top: 20px;">{{ error_message }}</div>
+        {% endif %}
       </div>
-
       <div class="chart-container">
         <canvas id="glacierChart" data-chartdata='{{ chart_data|tojson }}'></canvas>
         <canvas id="tempChart" data-chartdata='{{ temp_chart_data|tojson }}'></canvas>
@@ -55,26 +74,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Map Initialization
-      const map = L.map('map').setView([28.5, 83.9], 6);
+      // Map Initialization (Himalaya region, not clickable)
+      const map = L.map('map', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false }).setView([28.5, 85.0], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(map);
-      
-      let marker = L.marker([28.5, 83.9]).addTo(map);
-      map.on('click', function(e) {
-        document.getElementById('latitude').value = e.latlng.lat.toFixed(4);
-        document.getElementById('longitude').value = e.latlng.lng.toFixed(4);
-        if (marker) {
-          map.removeLayer(marker);
-        }
-        marker = L.marker(e.latlng).addTo(map);
-      });
-
-      // Year Picker
-      document.getElementById('year_picker').addEventListener('change', function() {
-        document.getElementById('year').value = new Date(this.value).getFullYear();
-      });
 
       // Chart Rendering
       function renderChart(canvasId, chartData, label, color) {
@@ -93,9 +97,19 @@
                   borderColor: color,
                   backgroundColor: color.replace('1)', '0.2)'),
                   fill: true,
+                  tension: 0.5
                 }]
               },
-              options: { responsive: true }
+              options: {
+                responsive: true,
+                scales: {
+                  x: { ticks: { color: '#fff' } },
+                  y: { ticks: { color: '#fff' } }
+                },
+                plugins: {
+                  legend: { labels: { color: '#fff' } }
+                }
+              }
             });
           } catch (e) {
             console.error("Chart error:", e);
@@ -113,6 +127,23 @@
       if (document.body.dataset.showPopup === 'True') {
         alert("Not a glacier, pick again 😠");
       }
+
+      // Loading overlay logic
+      const form = document.getElementById('prediction-form');
+      form.addEventListener('submit', function() {
+        document.getElementById('loading-overlay').style.display = 'flex';
+      });
+      window.addEventListener('pageshow', function() {
+        document.getElementById('loading-overlay').style.display = 'none';
+      });
+
+      // Sync slider and number input
+      const yearSlider = document.getElementById('year-slider');
+      const yearInput = document.getElementById('year-input');
+      
+      yearSlider.addEventListener('input', () => yearInput.value = yearSlider.value);
+      yearInput.addEventListener('input', () => yearSlider.value = yearInput.value);
+
     });
   </script>
 </body>

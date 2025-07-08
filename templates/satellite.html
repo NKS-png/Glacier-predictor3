@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Satellite Viewer</title>
+  <style>
+    body {
+      background-color: #111;
+      color: white;
+      text-align: center;
+      font-family: sans-serif;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+    }
+    img {
+      margin-top: 20px;
+      border: 2px solid white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Satellite Image Viewer 🌍</h1>
+  <form method="POST">
+    <input type="text" name="latitude" placeholder="Latitude" required>
+    <input type="text" name="longitude" placeholder="Longitude" required>
+    <input type="date" name="date" required>
+    <button type="submit">Fetch Image</button>
+  </form>
+
+  {% if image_data %}
+    <h2>Satellite Image Result</h2>
+    <img src="data:image/jpeg;base64,{{ image_data }}" width="512" height="512">
+  {% endif %}
+
+  {% if error_message %}
+    <div style="color: #ff4444; margin-top: 20px;">{{ error_message }}</div>
+  {% endif %}
+</body>
+</html>
