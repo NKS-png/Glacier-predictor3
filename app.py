@@ -7,21 +7,25 @@ from io import BytesIO
 from PIL import Image
 import base64
 import os
+
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    prediction = None
-    risk_level = None
-    chart_data = []
-    temp_chart_data = []
-    image_file = 'static/default.jpg'
-    target_year = None
-    show_popup = False
-    image_data = None
-    image_data_2025 = None
-    error_message = None
-    info_message = None
+    # ... [all your existing logic stays the same] ...
+    return render_template('index.html',
+                           prediction=prediction,
+                           risk=risk_level,
+                           chart_data=chart_data,
+                           temp_chart_data=temp_chart_data,
+                           image_file=image_file,
+                           target_year=target_year,
+                           show_popup=show_popup,
+                           image_data=image_data,
+                           image_data_2025=image_data_2025,
+                           error_message=error_message,
+                           info_message=info_message)
+
 
     if request.method == 'POST':
         try:
@@ -113,5 +117,3 @@ def index():
                            error_message=error_message,
                            info_message=info_message)
 
-if __name__ == '__main__':
-  app.run(debug=True)
